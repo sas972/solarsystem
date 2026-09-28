@@ -5,10 +5,10 @@
 #include <optional>
 #include <vector>
 
-// Gravitációs állandó (m^3 kg^-1 s^-2)
+// Gravitational constant (m^3 kg^-1 s^-2)
 const double G = 6.67430e-11;
 
-// Saját 2D vektor struktúra dupla pontossággal a pontos fizikai számításokhoz
+// Custom 2D vector structure with double precision for accurate physical calculations
 struct Vec2 {
   double x = 0.0, y = 0.0;
   Vec2 operator+(Vec2 o) const { return {x + o.x, y + o.y}; }
@@ -17,30 +17,29 @@ struct Vec2 {
   Vec2 operator/(double s) const { return {x / s, y / s}; }
 };
 
-// Egy égitestet leíró struktúra
+// Structure describing a celestial body
 struct Body {
   double mass;
   double radius;
   sf::Color color;
   Vec2 position;
   Vec2 velocity;
-  std::vector<sf::Vertex> trail; // Nyomvonal (orbit) eltárolása
+  std::vector<sf::Vertex> trail; // Store the orbital trail
 };
 
-// A teljes rendszer állapota
+// The state of the entire system
 struct State {
   std::vector<Vec2> positions;
   std::vector<Vec2> velocities;
 };
 
-// A deriváltak: pozícióváltozás (sebesség) és sebességváltozás (gyorsulás)
+// Derivatives: change in position (velocity) and change in velocity (acceleration)
 struct Derivative {
   std::vector<Vec2> dPositions;
   std::vector<Vec2> dVelocities;
 };
 
-// Kiszámítja az állapot alapján a deriváltakat (Newton-féle gravitációs
-// törvény)
+// Calculates derivatives based on the state (Newton's law of universal gravitation)
 Derivative evaluate(const std::vector<Body> &bodies, const State &initial,
                     double dt, const Derivative &d) {
   State state;
@@ -48,7 +47,7 @@ Derivative evaluate(const std::vector<Body> &bodies, const State &initial,
   state.positions.resize(numBodies);
   state.velocities.resize(numBodies);
 
-  // Átmeneti állapot számítása
+  // Calculate intermediate state
   for (size_t i = 0; i < numBodies; ++i) {
     state.positions[i] = initial.positions[i] + d.dPositions[i] * dt;
     state.velocities[i] = initial.velocities[i] + d.dVelocities[i] * dt;
@@ -58,10 +57,10 @@ Derivative evaluate(const std::vector<Body> &bodies, const State &initial,
   output.dPositions.resize(numBodies);
   output.dVelocities.resize(numBodies, {0.0, 0.0});
 
-  // Minden égitestre ható gravitációs erő összegzése
+  // Summing gravitational forces acting on all bodies
   for (size_t i = 0; i < numBodies; ++i) {
     output.dPositions[i] =
-        state.velocities[i]; // A pozíció deriváltja a sebesség
+        state.velocities[i]; // Derivative of position is velocity
     for (size_t j = 0; j < numBodies; ++j) {
       if (i == j)
         continue;
@@ -71,14 +70,14 @@ Derivative evaluate(const std::vector<Body> &bodies, const State &initial,
       if (dist > 0.0) {
         double force = (G * bodies[j].mass) / distSq;
         output.dVelocities[i] =
-            output.dVelocities[i] + r * (force / dist); // Gyorsulás vektor
+            output.dVelocities[i] + r * (force / dist); // Acceleration vector
       }
     }
   }
   return output;
 }
 
-// Negyedrendű Runge-Kutta (RK4) integrátor
+// 4th order Runge-Kutta (RK4) integrator
 void integrate(std::vector<Body> &bodies, double dt) {
   size_t numBodies = bodies.size();
   State initial;
@@ -113,18 +112,18 @@ void integrate(std::vector<Body> &bodies, double dt) {
 }
 
 int main() {
-  // SFML 3: sf::VideoMode({width, height}) és std::optional eseménykezelés
+  // SFML 3: sf::VideoMode({width, height}) and std::optional event handling
   sf::RenderWindow window(sf::VideoMode({1000, 1000}),
                           "Solar System Simulator (RK4) - C++20 & SFML3");
   window.setFramerateLimit(60);
 
   std::vector<Body> bodies;
 
-  // Nap (Sun)
+  // Sun
   bodies.push_back(
       {1.989e30, 20.0, sf::Color::Yellow, {0.0, 0.0}, {0.0, 0.0}, {}});
 
-  // Merkúr (Mercury)
+  // Mercury
   bodies.push_back({3.301e23,
                     3.0,
                     sf::Color(150, 150, 150),
@@ -132,7 +131,7 @@ int main() {
                     {0.0, 47360.0},
                     {}});
 
-  // Vénusz (Venus)
+  // Venus
   bodies.push_back({4.867e24,
                     5.0,
                     sf::Color(255, 165, 0),
@@ -140,7 +139,7 @@ int main() {
                     {0.0, 35020.0},
                     {}});
 
-  // Föld (Earth)
+  // Earth
   bodies.push_back(
       {5.972e24, 6.0, sf::Color::Blue, {149.6e9, 0.0}, {0.0, 29780.0}, {}});
 
@@ -148,23 +147,22 @@ int main() {
   bodies.push_back(
       {6.39e23, 4.0, sf::Color::Red, {227.9e9, 0.0}, {0.0, 24070.0}, {}});
 
-  // Szimulációs időlépés (1 képkocka alatt 12 óra telik el)
+  // Simulation time step (12 hours pass per frame)
   double dt = 12.0 * 3600.0;
 
-  // Képernyő skálázása: 1 pixel = 3.5 millió km
+  // Screen scaling: 1 pixel = 1.5 million km
   double scale = 1.5e9;
 
   while (window.isOpen()) {
-    // SFML 3 eseménykezelés `std::optional<sf::Event>` és `is<T>()`
-    // segítségével
+    // SFML 3 event handling using `std::optional<sf::Event>` and `is<T>()`
     while (const std::optional<sf::Event> event = window.pollEvent()) {
       if (event->is<sf::Event::Closed>()) {
         window.close();
       }
     }
 
-    // Több kisebb lépésre bontjuk az integrálást, hogy pontosabb maradjon a
-    // pálya
+    // We break the integration into multiple smaller steps to keep the orbit
+    // more accurate
     int steps = 4;
     for (int i = 0; i < steps; ++i) {
       integrate(bodies, dt / static_cast<double>(steps));
@@ -172,29 +170,29 @@ int main() {
 
     window.clear(sf::Color::Black);
 
-    // Ablak közepe (előkészület)
+    // Center of the window (preparation)
     sf::Vector2f center(static_cast<float>(window.getSize().x) / 2.0f,
                         static_cast<float>(window.getSize().y) / 2.0f);
 
     for (auto &body : bodies) {
-      // Rajzolási pozíció kiszámítása
+      // Calculate drawing position
       float x = static_cast<float>(body.position.x / scale) + center.x;
       float y = static_cast<float>(body.position.y / scale) + center.y;
 
-      // Nyomvonal frissítése
+      // Update trail
       if (body.trail.size() > 500) {
         body.trail.erase(body.trail.begin());
       }
       body.trail.push_back(sf::Vertex(
           {x, y}, sf::Color(body.color.r, body.color.g, body.color.b, 100)));
 
-      // Nyomvonal kirajzolása (csak ha van legalább 2 pont)
+      // Draw trail (only if there are at least 2 points)
       if (body.trail.size() > 1) {
         window.draw(body.trail.data(), body.trail.size(),
                     sf::PrimitiveType::LineStrip);
       }
 
-      // Égitest kirajzolása
+      // Draw celestial body
       sf::CircleShape shape(static_cast<float>(body.radius));
       shape.setOrigin(
           {static_cast<float>(body.radius), static_cast<float>(body.radius)});
