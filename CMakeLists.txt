@@ -7,7 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # SFML 3 megkeresése (Graphics, Window és System komponensekre van szükség)
 find_package(SFML 3 COMPONENTS Graphics Window System REQUIRED)
 
-add_executable(SolarSystemSimulator main.cpp)
+if(APPLE)
+    add_executable(SolarSystemSimulator MACOSX_BUNDLE main.cpp)
+else()
+    add_executable(SolarSystemSimulator main.cpp)
+endif()
 
 # Linkelés az SFML 3 könyvtáraival
 target_link_libraries(SolarSystemSimulator PRIVATE SFML::Graphics SFML::Window SFML::System)
