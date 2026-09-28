@@ -1,0 +1,36 @@
+# OS specifikus fájlok
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# CMake generált fájlok és mappák
+build/
+build-*/
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Fordított binárisok és tárgykódok
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+SolarSystemSimulator
+
+# IDE-k és szerkesztők
+.vscode/
+.idea/
+*.swp
+*.swo
+*.xcodeproj/
+*.xcworkspace/
+
+.cache/
